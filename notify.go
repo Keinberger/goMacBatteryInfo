@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -21,15 +20,13 @@ func pushBatteryNotifyMessage(minutesRemaining, charge int) {
 	if charge > 0 && minutesRemaining == 0 {
 		message, err := getBatteryInfo()
 		if err != nil {
-			log.Fatal("Error while updating battery level", err)
-			return
+			panic("Error while updating battery level", err)
 		}
 
 		percentage, _ := strconv.Atoi(message[61:63])
 
 		remainingChargeTillNotif := percentage - charge
 		minutesTillCharge := (minutesTillZero / percentage) * remainingChargeTillNotif
-		fmt.Println("You will be notified in ", minutesTillCharge, " minutes.")
 
 		time.Sleep(time.Duration(minutesTillCharge) * time.Minute)
 
