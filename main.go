@@ -81,6 +81,5 @@ func onReady() {
 func onExit() {
 	shutdown = true
 	fmt.Println("Waiting for goroutines to shut down...")
-	wg.Wait()
 	fmt.Println(name + " quitted succesfully")
 }

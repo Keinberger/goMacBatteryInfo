@@ -34,7 +34,6 @@ func pushBatteryNotifyMessage(minutesRemaining, charge int) {
 		notify("Battery charge is at "+chargeString+"%", "You should consider charging your battery", "")
 	} else {
 		notifications[minutesRemaining] = false
-		wg.Add(1)
 		go func() {
 			var hour int
 			var min int
@@ -71,7 +70,6 @@ func pushBatteryNotifyMessage(minutesRemaining, charge int) {
 					break
 				}
 			}
-			defer wg.Done()
 		}()
 	}
 }

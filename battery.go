@@ -50,7 +50,6 @@ func updateBatteryLevel(interval time.Duration) {
 	go checkIfClickNotify(m[10], pushBatteryNotifyMessage, 10, 0)
 
 	var previousLoad string
-	wg.Add(1)
 	for {
 		if checkIfShutdown() {
 			break
@@ -79,10 +78,14 @@ func updateBatteryLevel(interval time.Duration) {
 				}
 			}
 		case strings.Contains(load, "discharging"):
-			title = strings.TrimSpace(load[83:89]) // [84:89]
+			title = load[83:89] // [84:89]
 			if strings.Contains(title, "r") {
 				title = strings.Trim(title, "r")
 			}
+			if strings.Contains(title, ";") {
+				title = strings.Trim(title, ";")
+			}
+			title = strings.TrimSpace(title)
 			battery.SetTitle(title + " remaining")
 			for k, v := range m {
 				if v.Disabled() && notifications[k] {
@@ -111,10 +114,14 @@ func updateBatteryLevel(interval time.Duration) {
 				}
 			}
 		case strings.Contains(load, "charging"):
-			title = strings.TrimSpace(load[75:81]) // [75:81]
+			title = load[75:81] // [75:81]
 			if strings.Contains(title, "r") {
 				title = strings.Trim(title, "r")
 			}
+			if strings.Contains(title, ";") {
+				title = strings.Trim(title, ";")
+			}
+			title = strings.TrimSpace(title)
 			battery.SetTitle(title + " until charged")
 			for _, v := range m {
 				if !v.Disabled() {
@@ -126,5 +133,4 @@ func updateBatteryLevel(interval time.Duration) {
 		systray.SetTitle(title)
 		previousLoad = load
 	}
-	defer wg.Done()
 }
