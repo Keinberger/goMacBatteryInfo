@@ -20,7 +20,7 @@ func pushBatteryNotifyMessage(minutesRemaining, charge int) {
 	if charge > 0 && minutesRemaining == 0 {
 		message, err := getBatteryInfo()
 		if err != nil {
-			panic("Error while updating battery level", err)
+			panic(err)
 		}
 
 		percentage, _ := strconv.Atoi(message[61:63])
