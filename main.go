@@ -20,7 +20,8 @@ func checkIfShutdown() bool {
 	return shutdown
 }
 
-func checkIfClick(menuItem *systray.MenuItem, itemFunction func(), param ...int) {
+// checkIfClick() checks if a certain menuItem gets clicked, then triggers a specified function
+func checkIfClick(menuItem *systray.MenuItem, itemFunction func()) {
 	for {
 		select {
 		case <-menuItem.ClickedCh:
@@ -29,6 +30,7 @@ func checkIfClick(menuItem *systray.MenuItem, itemFunction func(), param ...int)
 	}
 }
 
+// checkIfClickNotify() checks if a certain menuItem gets clicked, then triggers a specified function with two parameters
 func checkIfClickNotify(menuItem *systray.MenuItem, itemFunction func(int, int), param ...int) {
 	for {
 		select {
@@ -39,6 +41,7 @@ func checkIfClickNotify(menuItem *systray.MenuItem, itemFunction func(int, int),
 	}
 }
 
+// checkIfClickStop() checks if a certain menuItem gets clicked, then triggers a specified function with one parameter
 func checkIfClickStop(menuItem *systray.MenuItem, itemFunction func(int), param ...int) {
 	for {
 		select {
@@ -49,22 +52,26 @@ func checkIfClickStop(menuItem *systray.MenuItem, itemFunction func(int), param 
 	}
 }
 
+// disable() disables an array of *systray.menuItem
 func disable(menuItems ...*systray.MenuItem) {
 	for _, v := range menuItems {
 		v.Disable()
 	}
 }
 
+// enable() enables an array of *systray.menuItem
 func enable(menuItems ...*systray.MenuItem) {
 	for _, v := range menuItems {
 		v.Enable()
 	}
 }
 
+// main() executes the systray.Run()
 func main() {
 	systray.Run(onReady, onExit)
 }
 
+// onReady() gets called at beginning of systray.Run() and opens updateBatteryLevel(), checkIfClick()
 func onReady() {
 	wg.Add(1)
 	go updateBatteryLevel(20)
@@ -78,6 +85,7 @@ func onReady() {
 	fmt.Println(name + " started succesfully")
 }
 
+// onExit() gets called when systray finishes
 func onExit() {
 	shutdown = true
 	fmt.Println("Waiting for goroutines to shut down...")

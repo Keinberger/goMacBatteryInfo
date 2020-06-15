@@ -11,6 +11,7 @@ import (
 
 var notifications = make(map[int]bool)
 
+// pushBatteryNotifyMessage() will trigger notify() when time remaining equals the specified minutesRemaining variable
 func pushBatteryNotifyMessage(minutesRemaining, charge int) {
 	infoHour, _ := strconv.Atoi(string(title[0]))
 	infoMinute, _ := strconv.Atoi(string(title[2:4]))
@@ -74,6 +75,7 @@ func pushBatteryNotifyMessage(minutesRemaining, charge int) {
 	}
 }
 
+// notify() sends a message
 func notify(msg, tit, iconPath string) error {
 	note := notif.NewNotification(msg)
 
@@ -89,6 +91,7 @@ func notify(msg, tit, iconPath string) error {
 	return err
 }
 
+// stopNotification() changes the notifications struct so that pushBatteryNotification() will break out of the for loop
 func stopNotification(minutesRemaining int) {
 	notifications[minutesRemaining] = true
 }
