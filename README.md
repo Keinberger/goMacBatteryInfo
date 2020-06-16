@@ -10,7 +10,7 @@ Run ./goMacBatteryInfo.sh and you will see '...' popping up in your menu bar. Af
 
 You can set a reminder for 1h, 30min or 10min of remaining battery life. After you set that reminder, you have the option to stop it.
 
-In order to quit the app, click on it and select 'Quit'.
+In order to quit the app, click on it and select 'Quit'. Quitting the program can take up to 20seconds.
 
 ## Important
 
