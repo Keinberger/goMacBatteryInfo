@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os/exec"
 	"runtime"
@@ -45,11 +46,13 @@ func updateBatteryLevel(interval time.Duration) {
 		notifications[k] = true
 	}
 
+	wg.Add(3)
 	go checkIfClickNotify(m[60], pushBatteryNotifyMessage, 60, 0)
 	go checkIfClickNotify(m[30], pushBatteryNotifyMessage, 30, 0)
 	go checkIfClickNotify(m[10], pushBatteryNotifyMessage, 10, 0)
 
 	var previousLoad string
+	wg.Add(1)
 	for {
 		if checkIfShutdown() {
 			break
@@ -77,6 +80,7 @@ func updateBatteryLevel(interval time.Duration) {
 					disable(v)
 				}
 			}
+			fmt.Println("I was at no 'estimate'")
 		case strings.Contains(load, "discharging"):
 			title = load[83:89] // [84:89]
 			if strings.Contains(title, "r") {
@@ -98,11 +102,13 @@ func updateBatteryLevel(interval time.Duration) {
 				if m == 0 || h < 1 {
 					disable(m1h)
 				}
-				if m <= 30 && h < 1 {
-					disable(m3)
-				}
-				if m <= 10 && h < 1 {
-					disable(m10)
+				if h < 1 {
+					if m <= 30 {
+						disable(m3)
+					}
+					if m <= 10 {
+						disable(m10)
+					}
 				}
 			}
 		case strings.Contains(load, "AC attached") || strings.Contains(load, "100%"):
@@ -128,9 +134,14 @@ func updateBatteryLevel(interval time.Duration) {
 					disable(v)
 				}
 			}
+			fmt.Println("I was at no 'charging'")
 		}
 
 		systray.SetTitle(title)
 		previousLoad = load
+
+		fmt.Println("I was at the end of it")
 	}
+	fmt.Println("Update battery level has shutdown")
+	defer wg.Done()
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -35,12 +36,14 @@ func pushBatteryNotifyMessage(minutesRemaining, charge int) {
 		notify("Battery charge is at "+chargeString+"%", "You should consider charging your battery", "")
 	} else {
 		notifications[minutesRemaining] = false
+		wg.Add(1)
 		go func() {
 			var hour int
 			var min int
 			var minTillZero int = minutesTillZero
 
 			stop := systray.AddMenuItem("Stop Notifier ("+strconv.Itoa(minutesRemaining)+"min)", "")
+			wg.Add(1)
 			go checkIfClickStop(stop, stopNotification, minutesRemaining)
 
 			for {
@@ -71,6 +74,8 @@ func pushBatteryNotifyMessage(minutesRemaining, charge int) {
 					break
 				}
 			}
+			fmt.Println("pushBatteryNotifyMessage has shut down")
+			defer wg.Done()
 		}()
 	}
 }
