@@ -8,12 +8,11 @@ import (
 )
 
 var (
-	name    string = "Battery Charge Monitor"
-	wg      sync.WaitGroup
-	battery *systray.MenuItem
-	title   string
-	m       = make(map[int]*systray.MenuItem)
-	//quit     = make(chan bool)
+	name     string = "Battery Charge Monitor"
+	wg       sync.WaitGroup
+	battery  *systray.MenuItem
+	title    string
+	m        = make(map[int]*systray.MenuItem)
 	shutdown bool
 )
 
