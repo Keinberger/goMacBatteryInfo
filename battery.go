@@ -36,18 +36,12 @@ func updateBatteryLevel(interval time.Duration) {
 		notifications[k] = true
 	}
 
-	wg.Add(3)
-	go checkIfClickNotify(m[60], pushBatteryNotifyMessage, 60, 0)
-	go checkIfClickNotify(m[30], pushBatteryNotifyMessage, 30, 0)
-	go checkIfClickNotify(m[10], pushBatteryNotifyMessage, 10, 0)
-
 	var previousLoad string
-	wg.Add(1)
 	for {
+		time.Sleep(interval * time.Second)
 		if checkIfShutdown() {
 			break
 		}
-		time.Sleep(interval * time.Second)
 
 		load, err := getBatteryInfo()
 		if err != nil {

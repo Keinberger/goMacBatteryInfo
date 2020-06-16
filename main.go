@@ -21,8 +21,8 @@ func checkIfShutdown() bool {
 	return shutdown
 }
 
-// checkIfClick() checks if a certain menuItem gets clicked, then triggers a specified function
-func checkIfClick(menuItem *systray.MenuItem, itemFunction func()) {
+// checkIfClickQuit() checks if a certain menuItem gets clicked, then triggers a specified function
+func checkIfClickQuit(menuItem *systray.MenuItem, itemFunction func()) {
 Y:
 	for {
 		select {
@@ -34,35 +34,17 @@ Y:
 	defer itemFunction()
 }
 
-// checkIfClickNotify() checks if a certain menuItem gets clicked, then triggers a specified function with two parameters
-func checkIfClickNotify(menuItem *systray.MenuItem, itemFunction func(int, int), param ...int) {
+// checkIfClick() checks if a certain menuItem gets clicked, then triggers a specified function with one parameter
+func checkIfClick(menuItem *systray.MenuItem, itemFunction func(int), param int) {
 Y:
 	for {
 		select {
 		case <-menuItem.ClickedCh:
-			itemFunction(param[0], param[1])
-			menuItem.Disable()
-		default:
 			if checkIfShutdown() {
 				break Y
 			}
-		}
-	}
-	defer wg.Done()
-}
-
-// checkIfClickStop() checks if a certain menuItem gets clicked, then triggers a specified function with one parameter
-func checkIfClickStop(menuItem *systray.MenuItem, itemFunction func(int), param ...int) {
-Y:
-	for {
-		select {
-		case <-menuItem.ClickedCh:
-			itemFunction(param[0])
+			itemFunction(param)
 			menuItem.Disable()
-		default:
-			if checkIfShutdown() {
-				break Y
-			}
 		}
 	}
 	defer wg.Done()
@@ -97,13 +79,19 @@ func onReady() {
 	m[30] = systray.AddMenuItem("Notify (30min remaining)", "")
 	m[10] = systray.AddMenuItem("Notify (10min remaining)", "")
 
+	wg.Add(3)
+	go checkIfClick(m[60], pushBatteryNotifyMessage, 60)
+	go checkIfClick(m[30], pushBatteryNotifyMessage, 30)
+	go checkIfClick(m[10], pushBatteryNotifyMessage, 10)
+
+	wg.Add(1)
 	go updateBatteryLevel(20)
 
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "")
 
 	wg.Add(1)
-	go checkIfClick(mQuit, systray.Quit)
+	go checkIfClickQuit(mQuit, systray.Quit)
 
 	fmt.Println(name + " started succesfully")
 }
@@ -112,6 +100,9 @@ func onReady() {
 func onExit() {
 	fmt.Println("Waiting for goroutines to shut down...")
 	shutdown = true
+	for _, v := range m {
+		v.ClickedCh <- struct{}{}
+	}
 	wg.Wait()
 	fmt.Println(name + " quitted succesfully")
 }
