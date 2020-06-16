@@ -25,7 +25,19 @@ func pushBatteryNotifyMessage(minutesRemaining int) {
 		var min int
 		var minTillZero int = minutesTillZero
 
-		stop := systray.AddMenuItem("Stop Notifier ("+strconv.Itoa(minutesRemaining)+"min)", "")
+		var stopTitle string
+		if x := minutesRemaining / 60; x > 0 {
+			var min int = minutesRemaining % 60
+			if x > 0 && min > 0 {
+				stopTitle = strconv.Itoa(x) + "hour" + strconv.Itoa(min) + "min"
+			} else if x > 0 {
+				stopTitle = strconv.Itoa(x) + "hour"
+			}
+		} else {
+			stopTitle = strconv.Itoa(minutesRemaining) + "min"
+		}
+
+		stop := systray.AddMenuItem("Stop Notifier ("+stopTitle+")", "")
 		wg.Add(1)
 		go checkIfClick(stop, stopNotification, minutesRemaining)
 

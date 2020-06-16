@@ -79,10 +79,12 @@ func onReady() {
 	m[30] = systray.AddMenuItem("Notify (30min remaining)", "")
 	m[10] = systray.AddMenuItem("Notify (10min remaining)", "")
 
-	wg.Add(3)
-	go checkIfClick(m[60], pushBatteryNotifyMessage, 60)
-	go checkIfClick(m[30], pushBatteryNotifyMessage, 30)
-	go checkIfClick(m[10], pushBatteryNotifyMessage, 10)
+	var i int
+	for k, v := range m {
+		go checkIfClick(v, pushBatteryNotifyMessage, k)
+		i++
+	}
+	wg.Add(i)
 
 	wg.Add(1)
 	go updateBatteryLevel(20)

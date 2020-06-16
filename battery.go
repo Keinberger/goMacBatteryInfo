@@ -56,7 +56,7 @@ func updateBatteryLevel(interval time.Duration) {
 		m3 := m[30]
 		m10 := m[10]
 		switch {
-		case strings.Contains(load, "no estimate"):
+		case strings.Contains(load, "no estimate") || strings.Contains(load, "AC attached") && !strings.Contains(load, "100%"):
 			title = "..."
 			battery.SetTitle("Calculating...")
 			for _, v := range m {
@@ -94,7 +94,7 @@ func updateBatteryLevel(interval time.Duration) {
 					}
 				}
 			}
-		case strings.Contains(load, "AC attached") || strings.Contains(load, "100%"):
+		case strings.Contains(load, "100%"):
 			title = "∞"
 			battery.SetTitle("Battery is charged")
 			for _, v := range m {
