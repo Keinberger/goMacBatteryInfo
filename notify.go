@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -74,7 +73,6 @@ func pushBatteryNotifyMessage(minutesRemaining, charge int) {
 					break
 				}
 			}
-			fmt.Println("pushBatteryNotifyMessage has shut down")
 			defer wg.Done()
 		}()
 	}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"os/exec"
 	"runtime"
@@ -32,15 +31,6 @@ func getBatteryInfo() (string, error) {
 
 // updateBatteryLevel updates the remaining battery time and the message inside of the application every 30 seconds
 func updateBatteryLevel(interval time.Duration) {
-	battery := systray.AddMenuItem("Calculating...", "")
-	systray.SetTitle("...")
-	battery.Disable()
-
-	m[60] = systray.AddMenuItem("Notify (1hour remaining)", "")
-	m[30] = systray.AddMenuItem("Notify (30min remaining)", "")
-	m[10] = systray.AddMenuItem("Notify (10min remaining)", "")
-	wg.Done()
-
 	for k, v := range m {
 		disable(v)
 		notifications[k] = true
@@ -80,7 +70,6 @@ func updateBatteryLevel(interval time.Duration) {
 					disable(v)
 				}
 			}
-			fmt.Println("I was at no 'estimate'")
 		case strings.Contains(load, "discharging"):
 			title = load[83:89] // [84:89]
 			if strings.Contains(title, "r") {
@@ -134,14 +123,10 @@ func updateBatteryLevel(interval time.Duration) {
 					disable(v)
 				}
 			}
-			fmt.Println("I was at no 'charging'")
 		}
 
 		systray.SetTitle(title)
 		previousLoad = load
-
-		fmt.Println("I was at the end of it")
 	}
-	fmt.Println("Update battery level has shutdown")
 	defer wg.Done()
 }
