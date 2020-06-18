@@ -12,7 +12,7 @@ import (
 	"github.com/getlantern/systray"
 )
 
-// getBatteryInfo returns a string containing the return-value of the pmset -g batt command
+// getBatteryInfo returns a string containing the return-value of the 'pmset -g batt' command
 func getBatteryInfo() (string, error) {
 	if runtime.GOOS == "windows" {
 		err := errors.New("Program not executable on Windows")
