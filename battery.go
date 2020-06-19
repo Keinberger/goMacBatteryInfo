@@ -103,7 +103,7 @@ func updateBatteryLevel(interval time.Duration) {
 				}
 			}
 		case strings.Contains(load, "charging"):
-			title = load[75:81] // [75:81]
+			title = load[75:81]
 			if strings.Contains(title, "r") {
 				title = strings.Trim(title, "r")
 			}

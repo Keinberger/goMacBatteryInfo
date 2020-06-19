@@ -16,7 +16,7 @@ var (
 	shutdown bool
 )
 
-// returns current value of shutdown
+// checkIfShutdown() returns current value of shutdown
 func checkIfShutdown() bool {
 	return shutdown
 }
