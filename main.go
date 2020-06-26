@@ -10,46 +10,44 @@ import (
 var (
 	name     string = "Battery Charge Monitor"
 	wg       sync.WaitGroup
+	battery  *systray.MenuItem
 	title    string
-	m             = make(map[int]*systray.MenuItem)
-	shutdown bool = false
+	m        = make(map[int]*systray.MenuItem)
+	shutdown bool
 )
 
-// returns current value of shutdown
+// checkIfShutdown() returns current value of shutdown
 func checkIfShutdown() bool {
 	return shutdown
 }
 
-// checkIfClick() checks if a certain menuItem gets clicked, then triggers a specified function
-func checkIfClick(menuItem *systray.MenuItem, itemFunction func()) {
+// checkIfClickQuit() checks if a certain menuItem gets clicked, then triggers a specified function
+func checkIfClickQuit(menuItem *systray.MenuItem, itemFunction func()) {
+Y:
 	for {
 		select {
 		case <-menuItem.ClickedCh:
-			itemFunction()
+			break Y
 		}
 	}
+	wg.Done()
+	defer itemFunction()
 }
 
-// checkIfClickNotify() checks if a certain menuItem gets clicked, then triggers a specified function with two parameters
-func checkIfClickNotify(menuItem *systray.MenuItem, itemFunction func(int, int), param ...int) {
+// checkIfClick() checks if a certain menuItem gets clicked, then triggers a specified function with one parameter
+func checkIfClick(menuItem *systray.MenuItem, itemFunction func(int), param int) {
+Y:
 	for {
 		select {
 		case <-menuItem.ClickedCh:
-			itemFunction(param[0], param[1])
+			if checkIfShutdown() {
+				break Y
+			}
+			itemFunction(param)
 			menuItem.Disable()
 		}
 	}
-}
-
-// checkIfClickStop() checks if a certain menuItem gets clicked, then triggers a specified function with one parameter
-func checkIfClickStop(menuItem *systray.MenuItem, itemFunction func(int), param ...int) {
-	for {
-		select {
-		case <-menuItem.ClickedCh:
-			itemFunction(param[0])
-			menuItem.Disable()
-		}
-	}
+	defer wg.Done()
 }
 
 // disable() disables an array of *systray.menuItem
@@ -73,21 +71,38 @@ func main() {
 
 // onReady() gets called at beginning of systray.Run() and opens updateBatteryLevel(), checkIfClick()
 func onReady() {
+	battery = systray.AddMenuItem("Calculating...", "")
+	systray.SetTitle("...")
+	battery.Disable()
+
+	m[60] = systray.AddMenuItem("Notify (1hour remaining)", "")
+	m[30] = systray.AddMenuItem("Notify (30min remaining)", "")
+	m[10] = systray.AddMenuItem("Notify (10min remaining)", "")
+
+	for k, v := range m {
+		wg.Add(1)
+		go checkIfClick(v, pushBatteryNotifyMessage, k)
+	}
+
 	wg.Add(1)
 	go updateBatteryLevel(20)
-	wg.Wait()
 
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "")
 
-	go checkIfClick(mQuit, systray.Quit)
+	wg.Add(1)
+	go checkIfClickQuit(mQuit, systray.Quit)
 
 	fmt.Println(name + " started succesfully")
 }
 
 // onExit() gets called when systray finishes
 func onExit() {
-	shutdown = true
 	fmt.Println("Waiting for goroutines to shut down...")
+	shutdown = true
+	for _, v := range m {
+		v.ClickedCh <- struct{}{}
+	}
+	wg.Wait()
 	fmt.Println(name + " quitted succesfully")
 }
