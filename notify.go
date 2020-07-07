@@ -76,8 +76,6 @@ func pushBatteryNotifyMessage(minutesRemaining int) {
 func notify(msg, tit, iconPath string) error {
 	note := notif.NewNotification(msg)
 
-	note.Group = "com.philippkeinberger.macBatteryInfo.batteryLevelNotification"
-	note.Sender = "com.philippkeinberger.macBatteryInfo"
 	note.Title = tit
 	note.ContentImage = iconPath
 	note.Sound = "'default'"
