@@ -1,0 +1,17 @@
+{
+    "updateInterval": 1,
+    "reminders": [
+      {
+        "min": 300
+      },
+      {
+        "min": 120
+      },
+      {
+        "min": 150
+      },
+      {
+        "min": 15
+      }
+    ]
+  }

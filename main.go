@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
 	"fmt"
+	"io/ioutil"
 	"sync"
 
 	"github.com/getlantern/systray"
@@ -12,9 +15,20 @@ var (
 	wg       sync.WaitGroup
 	battery  *systray.MenuItem
 	title    string
-	m        = make(map[int]*systray.MenuItem)
+	conf     config
 	shutdown bool
 )
+
+type config struct {
+	UpdateInterval int        `json:"updateInterval"`
+	Reminders      []reminder `json:"reminders"`
+}
+
+type reminder struct {
+	MinutesRemaining int `json:"min"`
+	item             *systray.MenuItem
+	notifier         bool
+}
 
 // checkIfShutdown() returns current value of shutdown
 func checkIfShutdown() bool {
@@ -35,7 +49,7 @@ Y:
 }
 
 // checkIfClick() checks if a certain menuItem gets clicked, then triggers a specified function with one parameter
-func checkIfClick(menuItem *systray.MenuItem, itemFunction func(int), param int) {
+func checkIfClick(menuItem *systray.MenuItem, itemFunction func(reminder), param reminder) {
 Y:
 	for {
 		select {
@@ -64,8 +78,27 @@ func enable(menuItems ...*systray.MenuItem) {
 	}
 }
 
+func openConfig(filePath string) config {
+	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		panic(err)
+	}
+
+	con := config{}
+	err = json.Unmarshal(content, &con)
+	if err != nil {
+		panic(err)
+	}
+
+	return con
+}
+
 // main() executes the systray.Run()
 func main() {
+	configFlag := flag.String("config", "config.json", "Path to config file (JSON)")
+	flag.Parse()
+	conf = openConfig(*configFlag)
+
 	systray.Run(onReady, onExit)
 }
 
@@ -75,17 +108,14 @@ func onReady() {
 	systray.SetTitle("...")
 	battery.Disable()
 
-	m[60] = systray.AddMenuItem("Notify (1hour remaining)", "")
-	m[30] = systray.AddMenuItem("Notify (30min remaining)", "")
-	m[10] = systray.AddMenuItem("Notify (10min remaining)", "")
-
-	for k, v := range m {
+	for k, v := range conf.Reminders {
+		conf.Reminders[k].item = systray.AddMenuItem("Notify ("+getTitle(convMinToSpec(v.MinutesRemaining))+" remaining)", "")
 		wg.Add(1)
-		go checkIfClick(v, pushBatteryNotifyMessage, k)
+		go checkIfClick(conf.Reminders[k].item, pushBatteryNotifyMessage, v)
 	}
 
 	wg.Add(1)
-	go updateBatteryLevel(20)
+	go updateBatteryLevel()
 
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "")
@@ -100,8 +130,8 @@ func onReady() {
 func onExit() {
 	fmt.Println("Waiting for goroutines to shut down...")
 	shutdown = true
-	for _, v := range m {
-		v.ClickedCh <- struct{}{}
+	for _, v := range conf.Reminders {
+		v.item.ClickedCh <- struct{}{}
 	}
 	wg.Wait()
 	fmt.Println(name + " quitted succesfully")

@@ -12,115 +12,135 @@ import (
 	"github.com/getlantern/systray"
 )
 
-// getBatteryInfo returns a string containing the return-value of the 'pmset -g batt' command
-func getBatteryInfo() (string, error) {
-	if runtime.GOOS == "windows" {
-		err := errors.New("Program not executable on Windows")
-		return "", err
-	} else if runtime.GOOS == "linux" {
-		err := errors.New("Program not executable on Linux")
-		return "", err
-	} else {
-		out, err := exec.Command("pmset", "-g", "batt").Output()
-		if err != nil {
-			return "", err
-		}
-		return string(out[:]), nil
+type batteryInfo struct {
+	calculating   bool
+	charging      bool
+	fullyCharged  bool
+	timeOnBattery timeSpec
+	timeRemaining timeSpec
+}
+
+type timeSpec struct {
+	hours int
+	mins  int
+}
+
+func convMinToSpec(min int) timeSpec {
+	return timeSpec{min / 60, min % 60}
+}
+
+func convTimeSpecToMin(t timeSpec) int {
+	return t.hours*60 + t.mins
+}
+
+func getTitle(t timeSpec) (title string) {
+	title = strconv.Itoa(t.hours) + ":"
+	if t.mins < 10 {
+		title += "0"
 	}
+	title += strconv.Itoa(t.mins)
+	return
+}
+
+// getBatteryInfo returns a string containing the return-value of the 'pmset -g batt' command
+func getBatteryInfo() (info batteryInfo, err error) {
+	switch runtime.GOOS {
+	case "windows":
+		err = errors.New("Program not executable on Windows")
+	case "linux":
+		err = errors.New("Program not executable on Linux")
+	default:
+		var out []byte
+		out, err = exec.Command("pmset", "-g", "batt").Output()
+		if err != nil {
+			return
+		}
+		entireString := strings.Split(strings.Join(strings.Split(strings.Join(strings.Split(string(out[:]), "\n"), ""), " "), ""), "	")
+		if len(entireString) < 2 {
+			err = errors.New("Could not retrieve battery info")
+			break
+		}
+		entireFormatted := strings.Split(entireString[1], ";")
+
+		info.calculating = strings.Contains(entireFormatted[2], "no estimate")
+		info.charging = entireFormatted[1] == "charging"
+		info.fullyCharged = entireFormatted[0] == "100%"
+
+		if !info.calculating && !info.fullyCharged {
+			remaining := strings.Split(entireFormatted[2][:4], ":")
+			if len(remaining) < 2 {
+				info.timeRemaining.hours = 0
+				info.timeRemaining.mins = 0
+				break
+			}
+			info.timeRemaining.hours, _ = strconv.Atoi(remaining[0])
+			info.timeRemaining.mins, _ = strconv.Atoi(remaining[1])
+		}
+	}
+
+	return info, nil
 }
 
 // updateBatteryLevel updates the remaining battery time and the message inside of the application every 30 seconds
-func updateBatteryLevel(interval time.Duration) {
-	for k, v := range m {
-		disable(v)
-		notifications[k] = true
+func updateBatteryLevel() {
+	for k, v := range conf.Reminders {
+		disable(v.item)
+		conf.Reminders[k].notifier = true
 	}
 
-	var previousLoad string
+	var previousInfo batteryInfo
 	for {
-		time.Sleep(interval * time.Second)
+		time.Sleep(time.Duration(conf.UpdateInterval) * time.Second)
 		if checkIfShutdown() {
 			break
 		}
 
-		load, err := getBatteryInfo()
+		batteryInfo, err := getBatteryInfo()
 		if err != nil {
 			log.Fatal("Error while updating battery", err)
 			break
 		}
-		if load == previousLoad {
+		if batteryInfo == previousInfo {
 			continue
 		}
-
-		m1h := m[60]
-		m3 := m[30]
-		m10 := m[10]
 		switch {
-		case strings.Contains(load, "no estimate") || strings.Contains(load, "AC attached") && !strings.Contains(load, "100%"):
+		case batteryInfo.calculating:
 			title = "..."
 			battery.SetTitle("Calculating...")
-			for _, v := range m {
-				if !v.Disabled() {
-					disable(v)
+			for _, v := range conf.Reminders {
+				if !v.item.Disabled() {
+					disable(v.item)
 				}
 			}
-		case strings.Contains(load, "discharging"):
-			title = load[83:89] // [84:89]
-			if strings.Contains(title, "r") {
-				title = strings.Trim(title, "r")
-			}
-			if strings.Contains(title, ";") {
-				title = strings.Trim(title, ";")
-			}
-			title = strings.TrimSpace(title)
-			battery.SetTitle(title + " remaining")
-			for k, v := range m {
-				if v.Disabled() && notifications[k] {
-					enable(v)
-				}
-			}
-			h, _ := strconv.Atoi(string(title[0]))
-			m, _ := strconv.Atoi(string(title[2:4]))
-			if h <= 1 {
-				if m == 0 || h < 1 {
-					disable(m1h)
-				}
-				if h < 1 {
-					if m <= 30 {
-						disable(m3)
-					}
-					if m <= 10 {
-						disable(m10)
-					}
-				}
-			}
-		case strings.Contains(load, "100%"):
+		case batteryInfo.fullyCharged:
 			title = "∞"
 			battery.SetTitle("Battery is charged")
-			for _, v := range m {
-				if !v.Disabled() {
-					disable(v)
+			for _, v := range conf.Reminders {
+				if !v.item.Disabled() {
+					disable(v.item)
 				}
 			}
-		case strings.Contains(load, "charging"):
-			title = load[75:81]
-			if strings.Contains(title, "r") {
-				title = strings.Trim(title, "r")
-			}
-			if strings.Contains(title, ";") {
-				title = strings.Trim(title, ";")
-			}
-			title = strings.TrimSpace(title)
+		case batteryInfo.charging: // charging battery
+			title = getTitle(batteryInfo.timeRemaining)
 			battery.SetTitle(title + " until charged")
-			for _, v := range m {
-				if !v.Disabled() {
-					disable(v)
+			for _, v := range conf.Reminders {
+				if !v.item.Disabled() {
+					disable(v.item)
+				}
+			}
+		default: // discharging battery (bc none of the other cases fit)
+			title = getTitle(batteryInfo.timeRemaining)
+			battery.SetTitle(title + " remaining")
+			for _, v := range conf.Reminders {
+				if convTimeSpecToMin(batteryInfo.timeRemaining) < v.MinutesRemaining {
+					disable(v.item)
+				} else if v.item.Disabled() && v.notifier {
+					enable(v.item)
 				}
 			}
 		}
-
 		systray.SetTitle(title)
-		previousLoad = load
+		previousInfo = batteryInfo
 	}
 	defer wg.Done()
 }
