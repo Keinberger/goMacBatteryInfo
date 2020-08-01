@@ -2,6 +2,9 @@
   "updateInterval": 20,
   "reminders": [
     {
+      "min": 90
+    },
+    {
       "min": 60
     },
     {

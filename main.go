@@ -78,10 +78,22 @@ func enable(menuItems ...*systray.MenuItem) {
 	}
 }
 
+func getDefaultConfig() config {
+	return config{
+		UpdateInterval: 20,
+		Reminders: []reminder{
+			{MinutesRemaining: 90},
+			{MinutesRemaining: 60},
+			{MinutesRemaining: 30},
+		},
+	}
+}
+
 func openConfig(filePath string) config {
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		panic(err)
+		// could not open file
+		return getDefaultConfig()
 	}
 
 	con := config{}
