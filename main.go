@@ -93,6 +93,7 @@ func openConfig(filePath string) config {
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		// could not open file
+		logError("Could not open file", err)
 		return getDefaultConfig()
 	}
 
