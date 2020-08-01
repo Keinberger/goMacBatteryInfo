@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -21,6 +22,7 @@ var (
 
 type config struct {
 	UpdateInterval int        `json:"updateInterval"`
+	AppIcon        string     `json:"appIcon"`
 	Reminders      []reminder `json:"reminders"`
 }
 
@@ -90,15 +92,20 @@ func getDefaultConfig() config {
 }
 
 func openConfig(filePath string) config {
-	content, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		// could not open file
-		logError("Could not open file", err)
+	var content []byte
+	if checkIfExists(filePath) {
+		var err error
+		content, err = ioutil.ReadFile(filePath)
+		if err != nil {
+			panicError(err)
+		}
+	} else {
+		logError("", errors.New("Could not open config file "+filePath))
 		return getDefaultConfig()
 	}
 
 	con := config{}
-	err = json.Unmarshal(content, &con)
+	err := json.Unmarshal(content, &con)
 	panicError(err)
 
 	return con

@@ -2,12 +2,21 @@ package main
 
 import (
 	"log"
+	"os"
 	"strconv"
 	"time"
 
 	notif "github.com/deckarep/gosx-notifier"
 	"github.com/getlantern/systray"
 )
+
+func checkIfExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
 
 // pushBatteryNotifyMessage() will trigger notify() when time remaining equals the specified minutesRemaining variable
 func pushBatteryNotifyMessage(notifier reminder) {
@@ -65,7 +74,10 @@ func notify(msg, tit, iconPath string) error {
 	note.Title = tit
 	note.ContentImage = iconPath
 	note.Sound = "'default'"
-	note.AppIcon = "icon/battery.png"
+
+	if checkIfExists(conf.AppIcon) {
+		note.AppIcon = conf.AppIcon
+	}
 
 	err := note.Push()
 
