@@ -28,7 +28,7 @@ The configuration file must have the following syntax:
 
 * `UpdateInterval` specifies the interval in second, in which the program should update the time remaining/untill full.
 * `reminders` is an array of reminders, each being a button visible inside of the aplicaiton.
-** `min` specifies the minutes of the reminder (e.g. 60 minutes/90 minutes) remaining, when one wants to be reminded.
+    * `min` specifies the minutes of the reminder (e.g. 60 minutes/90 minutes) remaining, when one wants to be reminded.
 
 The application will remind you, if the battery time drops below the mintues remaining specified in the configuration file.
 One may parse the configuration file with the `-config <filePath>` flag when starting the program. If no configuration file is specified, the programm will use the default values shown in the example of the json file structure above. 
