@@ -47,14 +47,10 @@ func pushBatteryNotifyMessage(notifier reminder) {
 				stop.ClickedCh <- struct{}{}
 				stop.Hide()
 				inf, err := getBatteryInfo()
-				if err != nil {
-					log.Fatal(err)
-				}
+				logError("", err)
 				message := "You have " + strconv.Itoa(inf.timeOnBattery.hours) + "h and " + strconv.Itoa(inf.timeOnBattery.mins) + "min of battery life remaining"
 				err = notify(message, "", "")
-				if err != nil {
-					log.Fatal("There was a problem while sending the notification", err)
-				}
+				logError("There was a problem while sending the notification", err)
 				break
 			}
 		}

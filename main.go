@@ -98,9 +98,7 @@ func openConfig(filePath string) config {
 
 	con := config{}
 	err = json.Unmarshal(content, &con)
-	if err != nil {
-		panic(err)
-	}
+	panicError(err)
 
 	return con
 }

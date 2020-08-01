@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"log"
 	"os/exec"
 	"runtime"
 	"strconv"
@@ -48,6 +47,31 @@ func getBatteryInfo() (info batteryInfo, err error) {
 	case "windows":
 		err = errors.New("Program not executable on Windows")
 	case "linux":
+		// var batteryPath, entireString []byte
+		// batteryPath, err = exec.Command("upower", "-e", "--enumerate").Output() // not sure if --enumerate is necessary
+		// if err != nil {
+		// 	return
+		// }
+		// entireString, err = exec.Command("upower", "-i", string(batteryPath), "grep", "-E", `"state|to\ full|percentage"`)
+		// if err != nil {
+		// 	return
+		// }
+
+		// sampleOutput := `
+		// state:               charging
+		// time to full:        57.3 minutes
+		// percentage:          42.5469%
+		// `
+
+		// entireFormatted := strings.Split(sampleOutput, ":")
+
+		// info.calculating = false
+		// info.charging = entireFormatted[1] == "charging"
+		// info.fullyCharged = entireFormatted[1] == "charged"
+
+		// if !info.calculating && !info.fullyCharged {
+		// }
+
 		err = errors.New("Program not executable on Linux")
 	default:
 		var out []byte
@@ -97,7 +121,7 @@ func updateBatteryLevel() {
 
 		batteryInfo, err := getBatteryInfo()
 		if err != nil {
-			log.Fatal("Error while updating battery", err)
+			logError("Error while updating battery info", err)
 			break
 		}
 		if batteryInfo == previousInfo {
