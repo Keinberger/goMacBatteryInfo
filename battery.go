@@ -88,7 +88,7 @@ func getBatteryInfo() (info batteryInfo, err error) {
 
 		info.calculating = strings.Contains(entireFormatted[2], "no estimate")
 		info.charging = entireFormatted[1] == "charging"
-		info.fullyCharged = info.charging && entireFormatted[0] == "100%"
+		info.fullyCharged = entireFormatted[1] == "charged"
 
 		if !info.calculating && !info.fullyCharged {
 			remaining := strings.Split(entireFormatted[2][:4], ":")
