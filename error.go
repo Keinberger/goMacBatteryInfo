@@ -12,6 +12,6 @@ func panicError(err error) {
 // logError logs the error with an error message
 func logError(msg string, err error) {
 	if err != nil {
-		log.Fatal(msg, err)
+		log.Println(msg, err)
 	}
 }

@@ -88,13 +88,12 @@ func getBatteryInfo() (info batteryInfo, err error) {
 
 		info.calculating = strings.Contains(entireFormatted[2], "no estimate")
 		info.charging = entireFormatted[1] == "charging"
-		info.fullyCharged = entireFormatted[0] == "100%"
+		info.fullyCharged = info.charging && entireFormatted[0] == "100%"
 
 		if !info.calculating && !info.fullyCharged {
 			remaining := strings.Split(entireFormatted[2][:4], ":")
 			if len(remaining) < 2 {
-				info.timeRemaining.hours = 0
-				info.timeRemaining.mins = 0
+				info.calculating = true
 				break
 			}
 			info.timeRemaining.hours, _ = strconv.Atoi(remaining[0])
