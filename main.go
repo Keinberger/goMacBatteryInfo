@@ -51,7 +51,7 @@ Y:
 }
 
 // checkIfClick() checks if a certain menuItem gets clicked, then triggers a specified function with one parameter
-func checkIfClick(menuItem *systray.MenuItem, itemFunction func(reminder), param reminder) {
+func checkIfClick(menuItem *systray.MenuItem, itemFunction func(*reminder), param *reminder) {
 Y:
 	for {
 		select {
@@ -128,8 +128,9 @@ func onReady() {
 
 	for k, v := range conf.Reminders {
 		conf.Reminders[k].item = systray.AddMenuItem("Notify ("+getTitle(convMinToSpec(v.MinutesRemaining))+" remaining)", "")
+
 		wg.Add(1)
-		go checkIfClick(conf.Reminders[k].item, pushBatteryNotifyMessage, v)
+		go checkIfClick(conf.Reminders[k].item, pushBatteryNotifyMessage, &conf.Reminders[k])
 	}
 
 	wg.Add(1)

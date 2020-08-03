@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -19,37 +18,30 @@ func checkIfExists(filePath string) bool {
 }
 
 // pushBatteryNotifyMessage() will trigger notify() when time remaining equals the specified minutesRemaining variable
-func pushBatteryNotifyMessage(notifier reminder) {
-	info, err := getBatteryInfo()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	minutesTillZero := convTimeSpecToMin(info.timeRemaining)
+func pushBatteryNotifyMessage(notifier *reminder) {
 	notifier.notifier = false
 	wg.Add(1)
 	go func() {
-		var minTillZero int = minutesTillZero
 		stop := systray.AddMenuItem("Stop Notifier (at "+getTitle(convMinToSpec(notifier.MinutesRemaining))+")", "")
 
 		wg.Add(1)
 		go checkIfClick(stop, stopNotification, notifier)
 		for {
+			info, err := getBatteryInfo()
+			if err != nil {
+				logError("", err)
+			}
+			minTillZero := convTimeSpecToMin(info.timeRemaining)
 			if checkIfShutdown() {
 				stop.ClickedCh <- struct{}{}
 				break
 			}
 			if minTillZero > notifier.MinutesRemaining {
 				if notifier.notifier {
-					for k, v := range conf.Reminders {
-						if v == notifier {
-							enable(conf.Reminders[k].item)
-						}
-					}
 					stop.Hide()
 					break
 				}
-				time.Sleep(10 * time.Second)
+				time.Sleep(time.Duration(conf.UpdateInterval) * time.Second)
 
 				minTillZero = convTimeSpecToMin(info.timeRemaining)
 			} else {
@@ -79,15 +71,14 @@ func notify(msg, tit, iconPath string) error {
 		note.AppIcon = conf.AppIcon
 	}
 
-	err := note.Push()
-
-	return err
+	return note.Push()
 }
 
 // stopNotification() changes the notifications struct so that pushBatteryNotification() will break out of the for loop
-func stopNotification(notifier reminder) {
+func stopNotification(notifier *reminder) {
 	for k, v := range conf.Reminders {
-		if v == notifier {
+		if v.MinutesRemaining == notifier.MinutesRemaining {
+			enable(conf.Reminders[k].item)
 			conf.Reminders[k].notifier = true
 		}
 	}
