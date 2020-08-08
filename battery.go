@@ -109,8 +109,14 @@ func getBatteryInfo() (info batteryInfo, err error) {
 
 // updateBatteryLevel updates the remaining battery time and the message inside of the application every 30 seconds
 func updateBatteryLevel() {
+	disableItem := func(m reminder) {
+		if !m.item.Disabled() {
+			disable(m.item)
+		}
+	}
+
 	for k, v := range conf.Reminders {
-		disable(v.item)
+		disableItem(v)
 		conf.Reminders[k].notifier = true
 	}
 
@@ -129,37 +135,32 @@ func updateBatteryLevel() {
 		if batteryInfo == previousInfo {
 			continue
 		}
+
 		switch {
 		case batteryInfo.calculating:
 			title = "..."
 			battery.SetTitle("Calculating...")
 			for _, v := range conf.Reminders {
-				if !v.item.Disabled() {
-					disable(v.item)
-				}
+				disableItem(v)
 			}
 		case batteryInfo.fullyCharged:
 			title = "∞"
 			battery.SetTitle("Battery is charged")
 			for _, v := range conf.Reminders {
-				if !v.item.Disabled() {
-					disable(v.item)
-				}
+				disableItem(v)
 			}
-		case batteryInfo.charging: // charging battery
+		case batteryInfo.charging:
 			title = getTitle(batteryInfo.timeRemaining)
 			battery.SetTitle(title + " until charged")
 			for _, v := range conf.Reminders {
-				if !v.item.Disabled() {
-					disable(v.item)
-				}
+				disableItem(v)
 			}
 		default: // discharging battery (bc none of the other cases fit)
 			title = getTitle(batteryInfo.timeRemaining)
 			battery.SetTitle(title + " remaining")
 			for _, v := range conf.Reminders {
 				if convTimeSpecToMin(batteryInfo.timeRemaining) < v.MinutesRemaining {
-					disable(v.item)
+					disableItem(v)
 				} else if v.item.Disabled() && v.notifier {
 					enable(v.item)
 				}

@@ -50,7 +50,7 @@ func pushBatteryNotifyMessage(notifier *reminder) {
 				stop.Hide()
 				inf, err := getBatteryInfo()
 				logError("", err)
-				message := "You have " + strconv.Itoa(inf.timeOnBattery.hours) + "h and " + strconv.Itoa(inf.timeOnBattery.mins) + "min of battery life remaining"
+				message := "You have " + strconv.Itoa(inf.timeRemaining.hours) + "h and " + strconv.Itoa(inf.timeRemaining.mins) + "min of battery life remaining"
 				err = notify(message, "", "")
 				logError("There was a problem while sending the notification", err)
 				break
