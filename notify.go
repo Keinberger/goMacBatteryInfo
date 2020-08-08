@@ -9,6 +9,7 @@ import (
 	"github.com/getlantern/systray"
 )
 
+// checkIfExists checks if a file/folder exists
 func checkIfExists(filePath string) bool {
 	_, err := os.Stat(filePath)
 	if os.IsNotExist(err) {

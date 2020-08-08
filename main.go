@@ -80,6 +80,7 @@ func enable(menuItems ...*systray.MenuItem) {
 	}
 }
 
+// getDefaultConfig returns a default config object
 func getDefaultConfig() config {
 	return config{
 		UpdateInterval: 20,
@@ -91,6 +92,7 @@ func getDefaultConfig() config {
 	}
 }
 
+// openConfig opens the specified config, according to the filePath and creates/returns a config object
 func openConfig(filePath string) config {
 	var content []byte
 	if checkIfExists(filePath) {

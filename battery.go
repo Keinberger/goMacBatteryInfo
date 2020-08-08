@@ -15,7 +15,7 @@ type batteryInfo struct {
 	calculating   bool
 	charging      bool
 	fullyCharged  bool
-	timeOnBattery timeSpec
+	timeOnBattery timeSpec // will be populated in future versions
 	timeRemaining timeSpec
 }
 
@@ -24,14 +24,17 @@ type timeSpec struct {
 	mins  int
 }
 
+// convMinToSpec converts given minutes min into a timeSpec object
 func convMinToSpec(min int) timeSpec {
 	return timeSpec{min / 60, min % 60}
 }
 
+// convTimeSpecToMin converts given timeSpec t into minutes
 func convTimeSpecToMin(t timeSpec) int {
 	return t.hours*60 + t.mins
 }
 
+// getTitle returns the correct title format of a given timeSpec
 func getTitle(t timeSpec) (title string) {
 	title = strconv.Itoa(t.hours) + ":"
 	if t.mins < 10 {
