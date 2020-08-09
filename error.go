@@ -10,8 +10,10 @@ func panicError(err error) {
 }
 
 // logError logs the error with an error message
-func logError(msg string, err error) {
+func logError(msg string, err error) bool {
 	if err != nil {
 		log.Println(msg, err)
+		return true
 	}
+	return false
 }

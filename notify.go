@@ -43,16 +43,16 @@ func pushBatteryNotifyMessage(notifier *reminder) {
 					break
 				}
 				time.Sleep(time.Duration(conf.UpdateInterval) * time.Second)
-
 				minTillZero = convTimeSpecToMin(info.timeRemaining)
 			} else {
 				stop.ClickedCh <- struct{}{}
 				stop.Hide()
 				inf, err := getBatteryInfo()
-				logError("", err)
-				message := "You have " + strconv.Itoa(inf.timeRemaining.hours) + "h and " + strconv.Itoa(inf.timeRemaining.mins) + "min of battery life remaining"
-				err = notify(message, "", "")
-				logError("There was a problem while sending the notification", err)
+				if !logError("", err) {
+					message := "You have " + strconv.Itoa(inf.timeRemaining.hours) + "h and " + strconv.Itoa(inf.timeRemaining.mins) + "min of battery life remaining"
+					err = notify(message, "", "")
+					logError("There was a problem while sending the notification", err)
+				}
 				break
 			}
 		}
