@@ -121,15 +121,17 @@ func updateBatteryLevel() {
 	}
 
 	var previousInfo batteryInfo
+Y:
 	for {
-		time.Sleep(time.Duration(conf.UpdateInterval) * time.Second)
-		if checkIfShutdown() {
-			break
+		for i := 0; i < conf.UpdateInterval*1000; i++ {
+			if checkIfShutdown() {
+				break Y
+			}
+			time.Sleep(1 * time.Millisecond)
 		}
 
 		batteryInfo, err := getBatteryInfo()
-		if err != nil {
-			logError("Error while updating battery info", err)
+		if logError("Error while updating battery info", err) {
 			break
 		}
 		if batteryInfo == previousInfo {
@@ -159,7 +161,7 @@ func updateBatteryLevel() {
 			title = getTitle(batteryInfo.timeRemaining)
 			battery.SetTitle(title + " remaining")
 			for _, v := range conf.Reminders {
-				if convTimeSpecToMin(batteryInfo.timeRemaining) < v.MinutesRemaining {
+				if convTimeSpecToMin(batteryInfo.timeRemaining) <= v.MinutesRemaining {
 					disableItem(v)
 				} else if v.item.Disabled() && v.notifier {
 					enable(v.item)

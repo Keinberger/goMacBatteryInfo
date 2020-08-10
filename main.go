@@ -98,9 +98,7 @@ func openConfig(filePath string) config {
 	if checkIfExists(filePath) {
 		var err error
 		content, err = ioutil.ReadFile(filePath)
-		if err != nil {
-			panicError(err)
-		}
+		panicError(err)
 	} else {
 		logError("", errors.New("Could not open config file "+filePath))
 		return getDefaultConfig()

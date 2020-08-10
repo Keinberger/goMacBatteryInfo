@@ -27,32 +27,30 @@ func pushBatteryNotifyMessage(notifier *reminder) {
 
 		wg.Add(1)
 		go checkIfClick(stop, stopNotification, notifier)
+	Y:
 		for {
+			for i := 0; i < conf.UpdateInterval*1000; i++ {
+				if checkIfShutdown() {
+					stop.ClickedCh <- struct{}{}
+					break Y
+				}
+				time.Sleep(1 * time.Millisecond)
+			}
+
 			info, err := getBatteryInfo()
-			if err != nil {
-				logError("", err)
-			}
+			logError("", err)
 			minTillZero := convTimeSpecToMin(info.timeRemaining)
-			if checkIfShutdown() {
-				stop.ClickedCh <- struct{}{}
-				break
-			}
 			if minTillZero > notifier.MinutesRemaining {
 				if notifier.notifier {
 					stop.Hide()
 					break
 				}
-				time.Sleep(time.Duration(conf.UpdateInterval) * time.Second)
-				minTillZero = convTimeSpecToMin(info.timeRemaining)
 			} else {
 				stop.ClickedCh <- struct{}{}
 				stop.Hide()
-				inf, err := getBatteryInfo()
-				if !logError("", err) {
-					message := "You have " + strconv.Itoa(inf.timeRemaining.hours) + "h and " + strconv.Itoa(inf.timeRemaining.mins) + "min of battery life remaining"
-					err = notify(message, "", "")
-					logError("There was a problem while sending the notification", err)
-				}
+				message := "You have " + strconv.Itoa(info.timeRemaining.hours) + "h and " + strconv.Itoa(info.timeRemaining.mins) + "min of battery life remaining"
+				err = notify(message, "", "")
+				logError("There was a problem while sending the notification", err)
 				break
 			}
 		}
