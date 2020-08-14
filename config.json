@@ -1,0 +1,15 @@
+{
+  "updateInterval": 20,
+  "appIcon": "icon/battery.png",
+  "reminders": [
+    {
+      "min": 90
+    },
+    {
+      "min": 60
+    },
+    {
+      "min": 30
+    }
+  ]
+}

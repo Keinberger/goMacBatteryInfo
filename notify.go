@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"os"
 	"strconv"
 	"time"
 
@@ -9,61 +9,47 @@ import (
 	"github.com/getlantern/systray"
 )
 
-var notifications = make(map[int]bool)
+// checkIfExists checks if a file/folder exists
+func checkIfExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
 
 // pushBatteryNotifyMessage() will trigger notify() when time remaining equals the specified minutesRemaining variable
-func pushBatteryNotifyMessage(minutesRemaining int) {
-	infoHour, _ := strconv.Atoi(string(title[0]))
-	infoMinute, _ := strconv.Atoi(string(title[2:4]))
-
-	minutesTillZero := infoHour*60 + infoMinute
-
-	notifications[minutesRemaining] = false
+func pushBatteryNotifyMessage(notifier *reminder) {
+	notifier.notifier = true
 	wg.Add(1)
 	go func() {
-		var hour int
-		var min int
-		var minTillZero int = minutesTillZero
+		stop := systray.AddMenuItem("Stop Notifier (at "+getTitle(convMinToSpec(notifier.MinutesRemaining))+")", "")
 
-		var stopTitle string
-		if x := minutesRemaining / 60; x > 0 {
-			var min int = minutesRemaining % 60
-			if x > 0 && min > 0 {
-				stopTitle = strconv.Itoa(x) + "hour" + strconv.Itoa(min) + "min"
-			} else if x > 0 {
-				stopTitle = strconv.Itoa(x) + "hour"
-			}
-		} else {
-			stopTitle = strconv.Itoa(minutesRemaining) + "min"
-		}
-
-		stop := systray.AddMenuItem("Stop Notifier ("+stopTitle+")", "")
 		wg.Add(1)
-		go checkIfClick(stop, stopNotification, minutesRemaining)
-
+		go checkIfClick(stop, stopNotification, notifier)
+	Y:
 		for {
-			if checkIfShutdown() {
-				stop.ClickedCh <- struct{}{}
+			for i := 0; i < conf.UpdateInterval*1000; i++ {
+				if checkIfShutdown() {
+					stop.ClickedCh <- struct{}{}
+					break Y
+				}
+				time.Sleep(1 * time.Millisecond)
+			}
+
+			info, err := getBatteryInfo()
+			logError("", err)
+
+			if notifier.notifier {
+				stop.Hide()
 				break
 			}
-			if minTillZero > minutesRemaining {
-				if notifications[minutesRemaining] {
-					enable(m[minutesRemaining]) // <-- control that
-					stop.Hide()
-					break
-				}
-				time.Sleep(10 * time.Second)
-
-				hour, _ = strconv.Atoi(string(title[0]))
-				min, _ = strconv.Atoi(string(title[2:4]))
-
-				minTillZero = hour*60 + min
-			} else {
+			if convTimeSpecToMin(info.timeRemaining) <= notifier.MinutesRemaining {
 				stop.ClickedCh <- struct{}{}
 				stop.Hide()
-				err := notify("You have "+string(title[0])+"h and "+string(title[2:4])+"min of battery life remaining", "", "")
-				if err != nil {
-					log.Fatal("There was a problem while sending the notification", err)
+				if !(info.timeRemaining.hours == 0 && info.timeRemaining.mins == 0) {
+					message := "You have " + strconv.Itoa(info.timeRemaining.hours) + "h and " + strconv.Itoa(info.timeRemaining.mins) + "min of battery life remaining"
+					logError("There was a problem while sending the notification", notify(message, "", ""))
 				}
 				break
 			}
@@ -79,14 +65,20 @@ func notify(msg, tit, iconPath string) error {
 	note.Title = tit
 	note.ContentImage = iconPath
 	note.Sound = "'default'"
-	note.AppIcon = "icon/battery.png"
 
-	err := note.Push()
+	if checkIfExists(conf.AppIcon) {
+		note.AppIcon = conf.AppIcon
+	}
 
-	return err
+	return note.Push()
 }
 
 // stopNotification() changes the notifications struct so that pushBatteryNotification() will break out of the for loop
-func stopNotification(minutesRemaining int) {
-	notifications[minutesRemaining] = true
+func stopNotification(notifier *reminder) {
+	for k, v := range conf.Reminders {
+		if v.MinutesRemaining == notifier.MinutesRemaining {
+			enable(conf.Reminders[k].item)
+			conf.Reminders[k].notifier = false
+		}
+	}
 }
