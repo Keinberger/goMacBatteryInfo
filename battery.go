@@ -115,11 +115,6 @@ func updateBatteryLevel() {
 		}
 	}
 
-	for k, v := range conf.Reminders {
-		disableItem(v)
-		conf.Reminders[k].notifier = true
-	}
-
 	var previousInfo batteryInfo
 Y:
 	for {

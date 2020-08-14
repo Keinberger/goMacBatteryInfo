@@ -120,7 +120,7 @@ func main() {
 	systray.Run(onReady, onExit)
 }
 
-// onReady() gets called at beginning of systray.Run() and opens updateBatteryLevel(), checkIfClick()
+// onReady gets called at beginning of systray.Run() and initialises the battery monitor
 func onReady() {
 	battery = systray.AddMenuItem("Calculating...", "")
 	systray.SetTitle("...")
@@ -128,6 +128,7 @@ func onReady() {
 
 	for k, v := range conf.Reminders {
 		conf.Reminders[k].item = systray.AddMenuItem("Notify ("+getTitle(convMinToSpec(v.MinutesRemaining))+" remaining)", "")
+		disable(conf.Reminders[k].item)
 
 		wg.Add(1)
 		go checkIfClick(conf.Reminders[k].item, pushBatteryNotifyMessage, &conf.Reminders[k])

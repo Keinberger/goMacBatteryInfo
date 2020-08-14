@@ -20,7 +20,7 @@ func checkIfExists(filePath string) bool {
 
 // pushBatteryNotifyMessage() will trigger notify() when time remaining equals the specified minutesRemaining variable
 func pushBatteryNotifyMessage(notifier *reminder) {
-	notifier.notifier = false
+	notifier.notifier = true
 	wg.Add(1)
 	go func() {
 		stop := systray.AddMenuItem("Stop Notifier (at "+getTitle(convMinToSpec(notifier.MinutesRemaining))+")", "")
@@ -39,18 +39,18 @@ func pushBatteryNotifyMessage(notifier *reminder) {
 
 			info, err := getBatteryInfo()
 			logError("", err)
-			minTillZero := convTimeSpecToMin(info.timeRemaining)
-			if minTillZero > notifier.MinutesRemaining {
-				if notifier.notifier {
-					stop.Hide()
-					break
-				}
-			} else {
+
+			if notifier.notifier {
+				stop.Hide()
+				break
+			}
+			if convTimeSpecToMin(info.timeRemaining) <= notifier.MinutesRemaining {
 				stop.ClickedCh <- struct{}{}
 				stop.Hide()
-				message := "You have " + strconv.Itoa(info.timeRemaining.hours) + "h and " + strconv.Itoa(info.timeRemaining.mins) + "min of battery life remaining"
-				err = notify(message, "", "")
-				logError("There was a problem while sending the notification", err)
+				if !(info.timeRemaining.hours == 0 && info.timeRemaining.mins == 0) {
+					message := "You have " + strconv.Itoa(info.timeRemaining.hours) + "h and " + strconv.Itoa(info.timeRemaining.mins) + "min of battery life remaining"
+					logError("There was a problem while sending the notification", notify(message, "", ""))
+				}
 				break
 			}
 		}
@@ -78,7 +78,7 @@ func stopNotification(notifier *reminder) {
 	for k, v := range conf.Reminders {
 		if v.MinutesRemaining == notifier.MinutesRemaining {
 			enable(conf.Reminders[k].item)
-			conf.Reminders[k].notifier = true
+			conf.Reminders[k].notifier = false
 		}
 	}
 }
